@@ -108,12 +108,81 @@ namespace PracticaApi.Controllers
                              autor = a.nombre,
                              b.categoria_id,
                              b.resumen
-                         }).Skip((skip-1)*2).Take(2).ToList();
+                         }).Skip((skip - 1) * 2).Take(2).ToList();
             if (libro == null)
             {
                 return NotFound();
             }
             return Ok(libro);
+        }
+
+        [HttpGet]
+        [Route("GetLatestBooks/{cantidad}")]
+        public IActionResult GetLatestBooks(int cantidad)
+        {
+            var libros = (from b in _context.Libro
+                          orderby b.anio_publicacion descending
+                          select new
+                          {
+                              b.id,
+                              b.titulo,
+                              b.anio_publicacion,
+                              b.autor_id,
+                              b.categoria_id,
+                              b.resumen
+                          }).Take(cantidad).ToList();
+
+            if (!libros.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(libros);
+        }
+
+        [HttpGet]
+        [Route("GetTotalBooksByYear")]
+        public IActionResult GetTotalBooksByYear()
+        {
+            var librosPorAnio = (from b in _context.Libro
+                                 group b by b.anio_publicacion into g
+                                 orderby g.Key descending
+                                 select new
+                                 {
+                                     anio = g.Key,
+                                     cantidad = g.Count()
+                                 }).ToList();
+
+            if (!librosPorAnio.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(librosPorAnio);
+        }
+
+        [HttpGet]
+        [Route("GetFirstBookByAuthor/{autorId}")]
+        public IActionResult GetFirstBookByAuthor(int autorId)
+        {
+            var primerLibro = (from b in _context.Libro
+                               where b.autor_id == autorId
+                               orderby b.anio_publicacion ascending
+                               select new
+                               {
+                                   b.id,
+                                   b.titulo,
+                                   b.anio_publicacion,
+                                   b.categoria_id,
+                                   b.resumen
+                               }).FirstOrDefault();
+
+            if (primerLibro == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(primerLibro);
         }
 
         [HttpPost]

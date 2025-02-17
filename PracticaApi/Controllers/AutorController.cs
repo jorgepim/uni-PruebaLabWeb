@@ -32,7 +32,7 @@ namespace PracticaApi.Controllers
         public IActionResult GetAutor(int id)
         {
             var autor = (from b in _context.Autor
-                           join a in _context.Libro on b.id equals a.autor_id
+                         join a in _context.Libro on b.id equals a.autor_id
                          where b.id == id
                          select new
                          {
@@ -47,6 +47,7 @@ namespace PracticaApi.Controllers
             }
             return Ok(autor);
         }
+
         [HttpGet]
         [Route("GetCountBooks")]
         public IActionResult GetCountBooks()
@@ -66,6 +67,39 @@ namespace PracticaApi.Controllers
                 return NotFound();
             }
             return Ok(autor);
+        }
+
+        [HttpGet]
+        [Route("GetTopAutores")]
+        public IActionResult GetTopAutores()
+        {
+            var autores = (from b in _context.Autor
+                           join l in _context.Libro on b.id equals l.autor_id
+                           group l by new { b.id, b.nombre, b.nacionalidad } into g
+                           orderby g.Count() descending
+                           select new
+                           {
+                               g.Key.id,
+                               g.Key.nombre,
+                               g.Key.nacionalidad,
+                               cantidad_libros = g.Count()
+                           }).ToList();
+
+            if (!autores.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(autores);
+        }
+
+        [HttpGet]
+        [Route("HasBooks/{id}")]
+        public IActionResult HasBooks(int id)
+        {
+            bool tieneLibros = _context.Libro.Any(l => l.autor_id == id);
+
+            return Ok(new { autor_id = id, tiene_libros = tieneLibros });
         }
 
         [HttpPost]
